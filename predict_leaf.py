@@ -39,7 +39,7 @@ def prepare_image(image_path, target_size=(32, 32)):
     
     return img_flattened
 
-def load_model(filename='leaf_model.pkl'):
+def load_model(filename='leaf_model_rgb_v2.pkl'):
     """
     Load the trained model from file
     """
@@ -105,7 +105,7 @@ if __name__ == "__main__":
     try:
         # Load the trained model
         print("\n📂 Loading trained model...")
-        hidden_layer, output_neuron = load_model('leaf_model_v2.pkl')
+        hidden_layer, output_neuron = load_model('leaf_model_rgb_v2.pkl')
         
         # Make prediction
         print("\n🔍 Analyzing leaf...")
