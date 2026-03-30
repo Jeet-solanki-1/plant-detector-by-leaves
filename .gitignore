@@ -1,0 +1,10 @@
+"*.pkl" 
+"checkpoints/" 
+"traind_models/" 
+"visuals/" 
+"__pycache__/" 
+"data/healthy/test/all-kind-leaves/" 
+"data/healthy/train/"   # if you have train images
+"data/" 
+"visuals/" 
+"understanding/*.png" 
