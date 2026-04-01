@@ -101,33 +101,38 @@ class LeafClassifier:
         return output, hidden_outputs
 
     def train_batch(self, img: np.ndarray, label: int, lr: float) -> float:
-        """Train on single image. Returns squared error."""
+        """
+            Train on single image WITHOUT updating weights.
+            Return (error, hidden_out, hidden_grad, output_grad)
+
+        """
+
         #Forward pass
         final_output, hidden_out = self.forward(img)
 
+        #Error
         error = label - final_output
         output_grad = error * final_output * (1-final_output)
 
-        # Update output layer
-        self.output_neuron.update_weights(
-            output_grad * np.array(hidden_out),
-            output_grad,
-            lr
-            )
+        #Store gradients  (NOT update yet!)
+        hidden_grads=[]
+        for h_idx, neuron in enumerate(self.hidden_layer):
+            hidden_error = error*output_neuron.weights[h_idx]
+            hidden_out_val = hidden_out[h_idx]
+            hidden_grad = hidden_error*hidden_out_val*(1-hidden_out_val)
+            hidden_grads.append({
+                'grad_weights':hidden_grad*img,
+                'grad_bias': hidden_grad,
+                'neuron_idx': h_idx
+                })
 
-        # Update hidden layer
-        for h_indx, neuron in enumerate(self.hidden_layer):
-            hidden_error = error * self.output_neuron.weights[h_indx]
-            hidden_out_val = hidden_out[h_indx]
-            hidden_grad = hidden_error * hidden_out_val * (1-hidden_out_val)
-            neuron.update_weights(hidden_grad*img,hidden_grad,lr)
-
-        return error ** 2
+        return error ** 2, hidden_out, output_grad, hidden_grad
 
     def train(
         self, 
         train_images: np.ndarray,
         train_labels: np.ndarray,
+        batch_size=32,
         learning_rate: float = 0.03,
         epochs: int = 300,
         early_stopping_patience: int =30,
@@ -153,6 +158,11 @@ class LeafClassifier:
         """
         import os
         os.makedirs(checkpoint_dir, exist_ok=True)
+
+        n_samples=len(train_images)
+        # Can use this also n_batches = math.ceil(n_samples / batch_size)
+        n_batches=(n_samples+batch_size-1)//batch_size
+
         best_loss = float('inf')
         patience_counter = 0
         current_lr = learning_rate
@@ -165,11 +175,84 @@ class LeafClassifier:
             if epoch == 100:
                 current_lr = learning_rate/2
 
+
             # Training
             total_loss = 0.0
-            for img, label in zip(train_images,train_labels):
-                total_loss+=self.train_batch(img,label,current_lr)
-            avg_loss = total_loss/len(train_images)
+            for batch_idx in range(n_batches):
+                start = batch_idx * batch_size
+                end = min(start+batch_size, n_samples)
+                batch_imgs=train_images[start:end]
+                batch_labls=train_labels[start:end]
+
+                #TRUE batch Training begins!: Accumulate gradients
+
+                #reset accumulators
+                accumulated_output_weights_grad = np.zeros_like(self.output_neuron.weights)
+                accumulated_output_bias_grad = 0.0
+                accumulated_hidden_weights_grad = [np.zeros_like(n.weights) for n in self.hidden_layer]
+                accumulated_hidden_bias_grad = [0.0 for _ in self.hidden_layer]
+                batch_loss=0.0
+                for img, label in zip(batch_imgs,batch_labls):
+                    #Forward pass
+                    final_output,hidden_out = self.forward(img)
+
+                    #Error
+                    error = label-final_output
+                    batch_loss+=error**2
+                    output_grad= error * final_output*(1-final_output)
+                    # so this is the actuall grad!
+                    # and when we multiply hidden_weights with this 
+                    # we get NEW output_weights! and that's what we want
+                    # so output_grd is actually the val that our model
+                    # gonna change itself wiht this much in this direction
+                    # but we are uncertian so we use learning rate
+                    # as we want to go in grad way , in grad distancce
+                    # but we are unsure that this could be a trap like
+                    # local_minima! 
+                    # so we make a deal! lets go but go less enough
+                    # that we dont regret we came so far in bad way
+
+                    #===========Accumulate output gradients=======
+
+                    accumulated_output_weights_grad += output_grad*np.array(hidden_out)
+                    # and our bias is like our values , means very hard , large things!
+                    # but can degreed dramatically, or like an threshold , fakist 
+                    accumulated_output_bias_grad+=output_grad
+
+                    #============Accumulate hidden gradients=======
+
+                    for h_idx, neuron in enumerate(self.hidden_layer):
+                        hidden_error = error * self.output_neuron.weights[h_idx]
+                        hidden_out_val=hidden_out[h_idx]
+                        hidden_grad = hidden_error*hidden_out_val*(1-hidden_out_val)
+
+                        accumulated_hidden_weights_grad[h_idx]+=hidden_grad*img
+                        accumulated_hidden_bias_grad[h_idx]
+            
+            #===============================
+            # UPDATE ONES per batch (AVERAGE gradient)
+            #===============================
+
+            batch_size_actual = len(batch_imgs)
+
+            # Update output layer
+            self.output_neuron.update_weights(
+                accumulated_output_weights_grad/batch_size_actual,
+                accumulated_output_bias_grad/batch_size_actual,
+                current_lr
+                )
+
+            # Update hidden layer
+            for h_idx, neuron in enumerate(self.hidden_layer):
+                neuron.update_weights(
+                    accumulated_hidden_weights_grad[h_idx]/batch_size_actual,
+                    accumulated_hidden_bias_grad[h_idx]/batch_size_actual,
+                    current_lr
+                    )
+
+            total_loss+=batch_loss
+
+            avg_loss = total_loss/n_samples
 
             # Calculate training accuracy
             train_correct = 0
@@ -185,7 +268,7 @@ class LeafClassifier:
             self.training_history['accuracy'].append(train_acc)
 
             # Print progress (minimal)
-            if epoch % checkpoint_interval==0:
+            if epoch % 1==0:
                 print(f"Epoch {epoch:4d} | Loss {avg_loss:.6f} | Acc: {train_acc:.1f}%")
 
             # Save checkpoint
@@ -259,7 +342,7 @@ def main():
 
    
     # Load data
-    images, labels = load_data("data/healthy",target_size=(224,224))
+    images, labels = load_data("data/healthy",target_size=(424,424))
     flattened = images.reshape(images.shape[0],-1)
 
     #Shuffle and split
@@ -274,22 +357,22 @@ def main():
     test_labels = labels[split:]
 
     # Create model 
-    input_size = 224*224*3
-    hidden_size = 256
+    input_size = 424*424*3
+    hidden_size = 400
 
     model = LeafClassifier(input_size,hidden_size)
 
     print(f"Input: {input_size}, Hidden: {hidden_size}, Parameters: {input_size*hidden_size + hidden_size + hidden_size + 1:,}")
 
     # Train
-    model.train(train_images, train_labels, learning_rate=0.001, epochs=100,checkpoint_interval=10,checkpoint_dir="checkpoints")
+    model.train(train_images, train_labels,batch_size=32, learning_rate=0.00028, epochs=50,checkpoint_interval=10,checkpoint_dir="checkpoints")
 
     # Evaluate
     acc, preds = model.evaluate(test_images, test_labels)
     print(f"\nTest Accuracy: {acc:.1f}% ({sum(preds==test_labels)}/{len(test_labels)})")
 
     # Save final
-    model.save("traind_models/leaf_model_refactored_v4_rgb_224i_256h_100epochs.pkl")
+    model.save("traind_models/leaf_model_biggest_model_of_all_time_424i_400h_00028lr_by_batch_training.pkl")
     print("Model saved.")
 
 if __name__=="__main__":
