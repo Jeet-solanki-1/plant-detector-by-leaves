@@ -125,7 +125,7 @@ def visualize_samples(
 if __name__ == "__main__":
     import os
     os.makedirs("visuals", exist_ok=True)
-    images, labels = load_data("data/healthy",target_size=(224,224),verbose=True)
+    images, labels = load_data("data/healthy",target_size=(98,98),verbose=True)
     print(f"images: {images.shape}, labels: {labels.shape}")
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     save_path = f"visuals/samples_{timestamp}.png"
