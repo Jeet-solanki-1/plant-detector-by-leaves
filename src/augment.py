@@ -24,6 +24,14 @@ def random_roation(image: np.ndarray, max_angle:float=1q5) -> np.ndarray:
 	roatated = rotate(image,angle,reshape=False, order=1)
 	return np.clip(roatated,0,1)
 
+def random_flip(image:np.ndarray) -> np.ndarray:
+	"""
+	Randomly flip image horizontally.
+	"""
+	if random.random() > 0.5:
+		return np.fliplr(image)
+	return image
+
 def augment_image(image: np.ndarray, intensity:str = "medium") -> np.ndarray:
 	"""
 	Apply a random cmbination of augmentations.
@@ -50,7 +58,10 @@ def augment_image(image: np.ndarray, intensity:str = "medium") -> np.ndarray:
 	#Rotatio (always apply for medium/heavy)
 	if random.random()>0.3:
 		img = random_roation(img, p["angle"])
-		
+
+	#Flip (50% chance)
+	img = random_flip(img)
+
 
 
 
