@@ -32,6 +32,18 @@ def random_flip(image:np.ndarray) -> np.ndarray:
 		return np.fliplr(image)
 	return image
 
+def random_brightness(image: np.ndarray, max_delta=0.2) -> np.ndarray:
+	"""
+	Adjust brightness randomly.
+
+	Args:
+		image: Input image array (0-1 range)
+		max_delta: Maximum brightness change (0.2 = +-20%)
+	"""
+	factor = 1+ random.uniform(-max_delta, max_delta)
+	adjusted = image * factor
+	return np.clip(adjusted,0,1)
+
 def augment_image(image: np.ndarray, intensity:str = "medium") -> np.ndarray:
 	"""
 	Apply a random cmbination of augmentations.
@@ -62,6 +74,9 @@ def augment_image(image: np.ndarray, intensity:str = "medium") -> np.ndarray:
 	#Flip (50% chance)
 	img = random_flip(img)
 
+	#Brightness
+	if random.random()>0.3:
+		img = random_brightness(img, p["brightness"])
 
-
+	return img
 
