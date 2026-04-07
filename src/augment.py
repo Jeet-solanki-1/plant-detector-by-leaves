@@ -44,6 +44,20 @@ def random_brightness(image: np.ndarray, max_delta=0.2) -> np.ndarray:
 	adjusted = image * factor
 	return np.clip(adjusted,0,1)
 
+def random_shift(image: np.ndarray, max_shift: float=0.1) -> np.ndarray:
+	"""
+	Shift image horizontally and vertically.
+
+	Args:
+		image: Input image array (H,W,3)
+		max_shift: Maximum shift as fraction of image size
+	"""
+	h,w = image.shape[:2]
+	shift_h=int(h*random.uniform(-max_shift, max_shift))
+	shift_w=int(w*random.uniform(-max_shift, max_shift)) 
+	shifted = shift(image, [shift_h, shift_w, 0], mode='nearest')
+	return shifted
+
 def augment_image(image: np.ndarray, intensity:str = "medium") -> np.ndarray:
 	"""
 	Apply a random cmbination of augmentations.
@@ -78,5 +92,8 @@ def augment_image(image: np.ndarray, intensity:str = "medium") -> np.ndarray:
 	if random.random()>0.3:
 		img = random_brightness(img, p["brightness"])
 
-	return img
+	#Shift 
+	if random.random()>0.5:
+		img = random_zoom(img, p["shift"])
 
+	return img
