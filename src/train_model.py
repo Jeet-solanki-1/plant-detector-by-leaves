@@ -308,7 +308,16 @@ def main():
     print("=" * 50)
 
     # Load data
-    images, labels = load_data("data/healthy",target_size=(98,98))
+    images, labels = load_data(
+        "data/healthy",
+        target_size=(98,98),
+        verbose=True,
+        augment=True,
+        augment_factor=3,
+        augment_intensity="medium"
+        )
+
+    print(f"Dataset size: {len(images)} images (with augmentation)")
     flattened = images.reshape(images.shape[0],-1)
 
     #Shuffle and split

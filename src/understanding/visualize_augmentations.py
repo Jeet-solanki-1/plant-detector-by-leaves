@@ -3,12 +3,15 @@ Visualize different augmentations on a sample leaf.
 """
 
 import matplotlib.pyplot as plt
-from prepare_data import prepare_image
-from augment import (
-    random_rotation, random_flip, random_brightness,
-    random_shift, random_zoom, augment_image
+from src.prepare_data import prepare_image
+from src.augment import (
+    random_rotation,
+    random_flip,
+    random_brightness,
+    random_shift,
+    random_zoom,
+    augment_image
 )
-
 def visualize_augmentations(image_path: str, target_size=(224, 224)):
     """Show original image and various augmentations."""
     
