@@ -8,6 +8,7 @@ from PIL import Image
 import numpy as np 
 from typing import Tuple, List, Optional
 from datetime import datetime
+from augment import augment_image
 
 def prepare_image(
     img_path:str,
@@ -31,10 +32,14 @@ def prepare_image(
 def load_data(
     data_folder:str,
     target_size:Tuple[int,int],
-    verbose: bool = False
+    verbose: bool = False,
+    augment:bool = False,
+    augment_factor: int = 3,
+    augment_intensity: str = "medium"
     ) -> Tuple[np.ndarray,np.ndarray]:
     """
     Load all images from subfolders with their labels.
+    Optionally augment data to increase dataset size.
 
     Folder structure expected:
         data_folder/
@@ -46,6 +51,10 @@ def load_data(
         data_folder: Root folder contaning class subfolders
         target_size: Desired image size
         verboseL: If True, print loading progress (default False)
+        augment: If True, create augmented versions of images
+        augment_factor: Number of augmented versions per original image
+        augment_intensity: "light", "medium", or "heavy"
+
     Returns:
         Tuple of (images array, labels array)
             images shape: (N, H, W, 3)
@@ -77,11 +86,22 @@ def load_data(
                     images.append(img_array)
                     labels.append(label)
                     count+=1
-                except Exception:
+
+                    #Create augmented versions
+                    if augment:
+                        for aug_idx in range(augment_factor):
+                            aug_img = augment_image(img_array, augment_intensity)
+                            images.append(aug_img)
+                            labels.append(label)
+                            count+=1
+
+                except Exception as e:
+                    if verbose:
+                        print(f"Error loading {filename}: {e}")
                     # Silent skip on errors (production)
                     continue
         if verbose:
-            print(f"Loaded {count} images from {class_name}")
+            print(f"Loaded {count} images from {class_name} (original + {augment_factor if augment else 0} augmentations)")
 
     if verbose:
         print(f"\n Total images loaded: {len(images)}")
