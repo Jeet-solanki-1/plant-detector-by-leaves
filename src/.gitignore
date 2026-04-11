@@ -1,0 +1,17 @@
+# models
+*.pkl
+checkpoints/
+traind_models/
+src/checkpoints/
+src/traind_models/
+
+# data
+data/
+
+# python cache
+__pycache__/
+*.pyc
+
+# visuals
+visuals/
+src/visuals/

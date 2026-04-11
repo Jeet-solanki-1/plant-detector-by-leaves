@@ -90,7 +90,7 @@ def load_data(
                     #Create augmented versions
                     if augment:
                         for aug_idx in range(augment_factor):
-                            aug_img = augment_image(img_array, augment_intensity)
+                            aug_img = augment_image(img_array, augment_intensity,target_size)
                             images.append(aug_img)
                             labels.append(label)
                             count+=1
@@ -145,7 +145,7 @@ def visualize_samples(
 if __name__ == "__main__":
     import os
     os.makedirs("visuals", exist_ok=True)
-    images, labels = load_data("data/healthy",target_size=(98,98),verbose=True)
+    images, labels = load_data("../data/healthy",target_size=(98,98),verbose=True,augment=True)
     print(f"images: {images.shape}, labels: {labels.shape}")
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     save_path = f"visuals/samples_{timestamp}.png"

@@ -301,16 +301,18 @@ class LeafClassifier:
 def main():
     from prepare_data import load_data
     import os
-    os.makedirs("checkpoints", exist_ok=True)
-    os.makedirs("traind_models", exist_ok=True)
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+    os.makedirs(os.path.join(BASE_DIR, "checkpoints"), exist_ok=True)
+    os.makedirs(os.path.join(BASE_DIR, "traind_models"), exist_ok=True)
     print("=" * 50)
     print("LEAF CLASSIFIER TRAINING")
     print("=" * 50)
 
     # Load data
     images, labels = load_data(
-        "data/healthy",
-        target_size=(98,98),
+        "../data/healthy",
+        target_size=(24,24),
         verbose=True,
         augment=True,
         augment_factor=3,
@@ -332,22 +334,22 @@ def main():
     test_labels = labels[split:]
 
     # Create model 
-    input_size = 98*98*3
-    hidden_size = 30
+    input_size = 24*24*3
+    hidden_size = 10
 
     model = LeafClassifier(input_size,hidden_size)
 
     print(f"Input: {input_size}, Hidden: {hidden_size}, Parameters: {input_size*hidden_size + hidden_size + hidden_size + 1:,}")
 
     # Train
-    model.train(train_images, train_labels,batch_size=32, learning_rate=0.01, epochs=50,checkpoint_interval=50,checkpoint_dir="checkpoints")
+    model.train(train_images, train_labels,batch_size=32, learning_rate=1, epochs=2,checkpoint_interval=1,checkpoint_dir="../checkpoints")
 
     # Evaluate
     acc, preds = model.evaluate(test_images, test_labels)
     print(f"\nTest Accuracy: {acc:.1f}% ({sum(preds==test_labels)}/{len(test_labels)})")
 
     # Save final
-    model.save("traind_models/leaf_model_testing.pkl")
+    model.save("../traind_models/leaf_model_augmentation_test_os_path_for_modules_outside_src_.pkl")
     print("Model saved.")
 
 if __name__=="__main__":

@@ -7,7 +7,7 @@ import numpy as np
 import random
 from scipy.ndimage import rotate, shift, zoom
 from PIL import Image
-
+from typing import Tuple
 def random_rotation(image: np.ndarray, max_angle:float = 15) -> np.ndarray:
 	"""
 	Rotate image by random angle between -max_angle and +max_angel.
@@ -80,7 +80,7 @@ def random_zoom(image: np.ndarray, max_zoom: float=0.1) -> np.ndarray:
 		zoomed = np.pad(zoomed, ((pad_h,pad_h),(pad_w,pad_w),(0,0)), mode='edge')
 	return np.clip(zoomed[:h,:w],0,1)
 
-def augment_image(image: np.ndarray, intensity:str = "medium") -> np.ndarray:
+def augment_image(image: np.ndarray, intensity:str = "medium",target_size:Tuple[int,int]=None) -> np.ndarray:
 	"""
 	Apply a random cmbination of augmentations.
 
@@ -122,5 +122,9 @@ def augment_image(image: np.ndarray, intensity:str = "medium") -> np.ndarray:
 	if random.random() > 0.5:
 		img = random_zoom(img,p["zoom"])
 
-
+	if target_size is not None:
+		h,w=target_size
+		img_pil = Image.fromarray((img*255).astype(np.uint8))
+		img_pil=img_pil.resize((w,h))
+		img = np.array(img_pil,dtype=np.float32)/255.0
 	return img

@@ -2,9 +2,15 @@
 Visualize different augmentations on a sample leaf.
 """
 
+import sys
+import os
+
+# Add parent directory (src/) to Python path
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+
 import matplotlib.pyplot as plt
-from src.prepare_data import prepare_image
-from src.augment import (
+from prepare_data import prepare_image
+from augment import (
     random_rotation,
     random_flip,
     random_brightness,
@@ -12,6 +18,7 @@ from src.augment import (
     random_zoom,
     augment_image
 )
+
 def visualize_augmentations(image_path: str, target_size=(224, 224)):
     """Show original image and various augmentations."""
     
@@ -49,6 +56,32 @@ def visualize_augmentations(image_path: str, target_size=(224, 224)):
     plt.show()
 
 if __name__ == "__main__":
-    # Test on a Parijat leaf
-    image_path = "../data/healthy/parijat/WhatsApp Image 2026-03-23 at 10.39.28.jpeg"
-    visualize_augmentations(image_path)
+    # ✅ CORRECTED PATH: two levels up to project root, then data/healthy/parijat/
+    # From src/understanding/ -> go up two levels: ../../data/healthy/parijat/
+    
+    base_path = os.path.join("..", "..", "data", "healthy", "parijat")
+    
+    # Find any jpeg file in that folder
+    if os.path.exists(base_path):
+        files = [f for f in os.listdir(base_path) if f.endswith(('.jpeg', '.jpg', '.png'))]
+        if files:
+            image_path = os.path.join(base_path, files[0])
+            print(f"Using image: {image_path}")
+            visualize_augmentations(image_path)
+        else:
+            print(f"No images found in {base_path}")
+    else:
+        print(f"Path not found: {base_path}")
+        print(f"Current working directory: {os.getcwd()}")
+        
+        # Try alternative: go to project root first
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        alt_path = os.path.join(project_root, "data", "healthy", "parijat")
+        print(f"Trying alternative: {alt_path}")
+        
+        if os.path.exists(alt_path):
+            files = [f for f in os.listdir(alt_path) if f.endswith(('.jpeg', '.jpg', '.png'))]
+            if files:
+                image_path = os.path.join(alt_path, files[0])
+                print(f"Found image: {image_path}")
+                visualize_augmentations(image_path)
