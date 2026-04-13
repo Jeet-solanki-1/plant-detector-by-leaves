@@ -63,12 +63,12 @@ def load_data(
     images: List[np.ndarray] = []
     labels: List[int] = []
     class_mapping = {
-        "parijat": 1,
-        "mango": 0,
-        "money-plant":0
+        "parijat": [1,0,0], # <- One-Hot Encoding! "Categories are mutually exclusive"
+        "mango": [0,1,0],
+        "money-plant":[0,0,1]
     }
 
-    for class_name,label in class_mapping.items():
+    for class_name,one_hot_label in class_mapping.items():
         class_folder = os.path.join(data_folder,class_name)
         if not os.path.exists(class_folder):
             if verbose:
@@ -84,7 +84,7 @@ def load_data(
                 try:
                     img_array=prepare_image(img_path,target_size)
                     images.append(img_array)
-                    labels.append(label)
+                    labels.append(np.array(one_hot_label, dtype=np.float32)) # <- array, not integer
                     count+=1
 
                     #Create augmented versions
@@ -92,7 +92,7 @@ def load_data(
                         for aug_idx in range(augment_factor):
                             aug_img = augment_image(img_array, augment_intensity,target_size)
                             images.append(aug_img)
-                            labels.append(label)
+                            labels.append(np.array(one_hot_label, dtype=np.float32))
                             count+=1
 
                 except Exception as e:
@@ -106,7 +106,7 @@ def load_data(
     if verbose:
         print(f"\n Total images loaded: {len(images)}")
 
-    return np.array(images,dtype=np.float32), np.array(labels, dtype=np.int32)
+    return np.array(images,dtype=np.float32), np.array(labels, dtype=np.float32)
 
 def visualize_samples(
     images: np.ndarray, 
@@ -125,12 +125,13 @@ def visualize_samples(
         save_path: If provided, save figure to path instead of showing
     """
     import matplotlib.pyplot as plt
-    
+    class_names = ["Parijat", "Mango", "Money-plant"]
     fig, axes = plt.subplots(3, 3, figsize=(9, 9))
     for i, ax in enumerate(axes.flat):
         if i < num_samples and i < len(images):
+            class_idx = np.argmax(labels[i])
             ax.imshow(images[i])
-            ax.set_title("Parijat" if labels[i] == 1 else "Other")
+            ax.set_title(class_names[class_idx])
             ax.axis('off')
     
     plt.tight_layout()
@@ -145,8 +146,11 @@ def visualize_samples(
 if __name__ == "__main__":
     import os
     os.makedirs("visuals", exist_ok=True)
-    images, labels = load_data("../data/healthy",target_size=(98,98),verbose=True,augment=True)
+
+    images, labels = load_data("../data/healthy",target_size=(255,255),verbose=True,augment=True)
+
     print(f"images: {images.shape}, labels: {labels.shape}")
+
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     save_path = f"visuals/samples_{timestamp}.png"
     visualize_samples(images, labels, save_path=save_path)
