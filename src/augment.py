@@ -21,7 +21,7 @@ def random_rotation(image: np.ndarray, max_angle:float = 15) -> np.ndarray:
 	"""
 
 	angle  = random.uniform(-max_angle,+max_angle)
-	rotated = rotate(image,angle,reshape=False, order=1)
+	rotated = rotate(image,angle,reshape=False, order=1, mode='reflect')
 	return np.clip(rotated,0,1)
 
 def random_flip(image:np.ndarray) -> np.ndarray:
@@ -55,7 +55,7 @@ def random_shift(image: np.ndarray, max_shift: float=0.1) -> np.ndarray:
 	h,w = image.shape[:2]
 	shift_h=int(h*random.uniform(-max_shift, max_shift))
 	shift_w=int(w*random.uniform(-max_shift, max_shift)) 
-	shifted = shift(image, [shift_h, shift_w, 0], mode='nearest')
+	shifted = shift(image, [shift_h, shift_w, 0], mode='reflect')
 	return shifted
 
 def random_zoom(image: np.ndarray, max_zoom: float=0.1) -> np.ndarray:
