@@ -35,7 +35,8 @@ def load_data(
     verbose: bool = False,
     augment:bool = False,
     augment_factor: int = 3,
-    augment_intensity: str = "medium"
+    augment_intensity: str = "medium",
+    max_per_class: Optional[int] = None
     ) -> Tuple[np.ndarray,np.ndarray]:
     """
     Load all images from subfolders with their labels.
@@ -78,13 +79,17 @@ def load_data(
             print(f"Loading {class_name}...")
 
         count = 0
+        loaded_originals = 0
         for filename in os.listdir(class_folder):
             if filename.lower().endswith(('.png','.jpeg','.jpg')):
+                if max_per_class is not None and loaded_originals >= max_per_class:
+                    break
                 img_path = os.path.join(class_folder,filename)
                 try:
                     img_array=prepare_image(img_path,target_size)
                     images.append(img_array)
                     labels.append(np.array(one_hot_label, dtype=np.float32)) # <- array, not integer
+                    loaded_originals += 1
                     count+=1
 
                     #Create augmented versions
